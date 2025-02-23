@@ -88,21 +88,18 @@ def normalize_utils(utils):
 
 
 def main():
-    utils = []
-    # m = 5
+    # utils = []
+    # m = 4
     # for i in range(m):
     #     for j in range(i+1):
     #         utils.append([0 if i != j else 1 for j in range(m)] + [1])
 
-    utils = [
-        [1, 0, 0, 1],
-        [1, 0, 0, 1],
-        [0, 1, 0, 1],
-        [0, 1, 0, 1],
-        [0, 0, 1, 1],
-        [0, 0, 1, 1],
-        [0, 1, 1, 1],
-    ]
+    utils = (
+        [[1, 0, 0, 0, 1]] * 4
+        + [[0, 1, 0, 0, 1]] * 5
+        + [[0, 0, 1, 0, 1]] * 6
+        + [[0, 0, 0, 1, 1]] * 7
+        )
     
     print(utils)
 
