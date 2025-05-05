@@ -9,6 +9,8 @@ def weighted_tournament(ballots):
                 a, b = ballot[i], ballot[j]
                 transition_matrix[a-1][b-1] += 1
 
+    transition_matrix += np.identity(m) * 1e-10  # Add self-loops to avoid zero probabilities
+
     transition_matrix /= np.sum(transition_matrix, axis=1, keepdims=True)  # Normalize the matrix
     return transition_matrix
 
@@ -17,6 +19,27 @@ def converge_to_distrib(T):
     index = np.argmin(np.abs(eig[0] - 1))  # Get the index of the eigenvalue = 1
     eigenvec = eig[1][:, index]  # Get the eigenvector
     return eigenvec / np.sum(eigenvec)
+
+def run_election(ballots, losers=[]):
+    win_distrib = np.zeros(len(ballots[0]), dtype=float)  # Initialize the win distribution
+
+    if len(losers) == len(ballots[0]) - 1:  # If all candidates are eliminated, return the distribution
+        winner = set(ballots[0]) - set(losers)
+        win_distrib[list(winner)[0] - 1] = 1.0
+        return win_distrib
+
+    sim_ballots = np.copy(ballots)  # Copy the ballots for simulation
+    for i in range(len(sim_ballots)):
+        for loser in losers:
+            sim_ballots[i] = [loser] + sim_ballots[i][sim_ballots[i] != loser].tolist()  # Move eliminated candidates to the front so they are do not effect the graph
+
+    G = weighted_tournament(sim_ballots)
+    distrib = converge_to_distrib(G)
+    for i in range(len(distrib)):
+        win_distrib += distrib[i] * run_election(sim_ballots, losers + [i+1])  # Recursive call to run_election
+
+    return win_distrib  # Return distribution of wins
+    
 
 
 def main():
@@ -28,6 +51,8 @@ def main():
     print(G)
 
     print(converge_to_distrib(G))
+
+    print(run_election(ballots))
 
 if __name__ == "__main__":
     main()
