@@ -95,13 +95,15 @@ def main():
     #         utils.append([0 if i != j else 1 for j in range(m)] + [1])
 
     utils = (
-        [[1, 0, 0, 0, 1]] * 4
-        + [[0, 1, 0, 0, 1]] * 5
-        + [[0, 0, 1, 0, 1]] * 6
-        + [[0, 0, 0, 1, 1]] * 7
+        [[1, 0, 0, 0, 1]] * 100
+        + [[0, 1, 0, 0, 1]] * 133
+        + [[0, 0, 1, 0, 1]] * 167
+        + [[0, 0, 0, 1, 1]] * 200
         )
+
+
     
-    print(utils)
+    # print(utils)
 
     utils = normalize_utils(utils)
 
