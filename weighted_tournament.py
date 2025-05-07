@@ -9,7 +9,8 @@ def weighted_tournament(ballots):
                 a, b = ballot[i], ballot[j]
                 transition_matrix[a-1][b-1] += 1
 
-    transition_matrix += np.identity(m) * 1e-10  # Add self-loops to avoid zero probabilities
+    for i in range(m):
+        transition_matrix[i][i] += len(ballots) * (m-1) - sum(transition_matrix[i]) # Adds self-transitions
 
     transition_matrix /= np.sum(transition_matrix, axis=1, keepdims=True)  # Normalize the matrix
     return transition_matrix
@@ -44,8 +45,20 @@ def run_election(ballots, losers=[]):
 
 def main():
     ballots = [
-        [1, 2, 3, 4, 5],
-        [1, 3, 2, 5, 4],
+        [1, 3, 2],
+        [1, 3, 2],
+        [1, 3, 2],
+        [1, 3, 2],
+        [1, 3, 2],
+        [1, 3, 2],
+        [3, 2, 1],
+        [3, 2, 1],
+        [3, 2, 1],
+        [3, 2, 1],
+        [3, 2, 1],
+        # [1, 2, 3, 4, 5],
+        # [1, 3, 2, 5, 4],
+        # [1, 3, 2, 4, 5]
     ]
     G = weighted_tournament(ballots)
     print(G)
