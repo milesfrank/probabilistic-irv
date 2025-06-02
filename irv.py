@@ -694,32 +694,18 @@ def main7():
 
 
 def main8():
-    """
-    compare: even vs uneven spread, which is worse for 1
-    """
+    base = (
+        [[1, 2, 3, 4]] * 10000 +
+        [[2, 3, 4, 1]] * 1 +
+        [[2, 4, 3, 1]] * 1 +
+        [[3, 1, 2, 4]] * 50 +
+        [[4, 1, 2, 3]] * 50
+    )
+
+    election = base + [[2, 1, 3, 4]]
 
 
-    election = [
-        [1,2,3,4],
-        [1,2,3,4],
-        [2,3,4,1],
-        [2,4,3,1],
-        [3,2,4,1],
-        [3,4,2,1],
-        [4,2,3,1],
-        [4,3,2,1],
-    ]
-
-    election2 = [
-        [1,2,3,4],
-        [1,2,3,4],
-        [2,3,4,1],
-        [2,3,4,1],
-        [3,2,4,1],
-        [3,2,4,1],
-        [4,3,2,1],
-        [4,3,2,1],
-    ]
+    election2 = base + [[1, 2, 3, 4]]
 
     winners = [0] * len(election[0]) # only works if same length
     for i in range(1000000):
@@ -729,14 +715,13 @@ def main8():
 
     print(str(winners))
 
-    winners = [0] * len(election[0]) # only works if same length
+    winners = [0] * len(election2[0]) # only works if same length
     for i in range(1000000):
-        winners[irv(election, loser_rule=inverse_probabilistic)[0] - 1] += 1
+        winners[irv(election2, loser_rule=inverse_probabilistic)[0] - 1] += 1
     
     winners = [w / sum(winners) for w in winners]
 
     print(str(winners))
-
 
 
 

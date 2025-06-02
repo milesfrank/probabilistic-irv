@@ -17,21 +17,21 @@ def approach_two(first_distrib, samples):
     return [count / samples for count in elim_counts]
 
 
-def approach_two_exact(first_distrib, eliminated=[]):
-    if first_distrib.count(0) > 1:
-        return [1/first_distrib.count(0) if x == 0 else 0 for x in first_distrib]
+def approach_two_exact(counts, eliminated=[]):
+    if counts.count(0) > 1:
+        return [1/counts.count(0) if x == 0 else 0 for x in counts]
 
     factors = []
-    for i in range(len(first_distrib)):
-        if first_distrib[i] == -1:
+    for i in range(len(counts)):
+        if counts[i] == -1:
             factors.append(0)
             continue
         factor = 1
-        for j in range(len(first_distrib)):
-            if first_distrib[j] == -1:
+        for j in range(len(counts)):
+            if counts[j] == -1:
                 continue
             if i != j:
-                factor *= first_distrib[j]
+                factor *= counts[j]
         factors.append(factor)
     norm_sum = sum(factors)
 
@@ -49,16 +49,50 @@ def util_to_first_distrib(utils, eliminated=[]):
     first_distrib = [-1 if i in eliminated else first_distrib[i] for i in range(len(first_distrib))] 
     return first_distrib
 
+def util_to_harmonic(utils, eliminated=[]):
+    utils = normalize_utils(utils)
+    harmonic = [0] * len(utils[0])
+    for profile in utils:
+        for i in eliminated:
+            profile[i] = -1
+        order = sorted(range(len(profile)), key=lambda i: profile[i], reverse=True)
+        for i, alt in enumerate(order):
+            if alt in eliminated:
+                continue
+            harmonic[alt] += 1 / (i + 1)
 
-def run_irv(utils, elim_rule=approach_two_exact, eliminated=[]):
+    harmonic = [f/sum(harmonic) for f in harmonic]
+    harmonic = [-1 if i in eliminated else harmonic[i] for i in range(len(harmonic))] 
+    return harmonic
+
+def util_to_borda(utils, eliminated=[]):
+    utils = normalize_utils(utils)
+    harmonic = [0] * len(utils[0])
+    for profile in utils:
+        for i in eliminated:
+            profile[i] = -1
+        order = sorted(range(len(profile)), key=lambda i: profile[i], reverse=True)
+        for i, alt in enumerate(order):
+            if alt in eliminated:
+                continue
+            harmonic[alt] += 1 / (i + 1)
+
+    harmonic = [f/sum(harmonic) for f in harmonic]
+    harmonic = [-1 if i in eliminated else harmonic[i] for i in range(len(harmonic))] 
+    return harmonic
+
+
+def run_irv(utils, count_rule=util_to_first_distrib, elim_rule=approach_two_exact, eliminated=[]):
     if len(eliminated) == len(utils[0]) - 1:
         win_distrib = [0 if i in eliminated else 1 for i in range(len(utils[0]))]
         return win_distrib
 
     win_distrib = [0] * len(utils[0])
-    first_distrib = util_to_first_distrib(utils, eliminated)
+    counts = count_rule(utils, eliminated)
 
-    elim_probs = elim_rule(first_distrib)
+    # print(counts)
+
+    elim_probs = elim_rule(counts)
 
     # print(f"with {eliminated} eliminated, the first_distrib is {first_distrib} and this round's elimination probabilities are {elim_probs}")
 
@@ -66,7 +100,7 @@ def run_irv(utils, elim_rule=approach_two_exact, eliminated=[]):
         if elim in eliminated:
             continue
 
-        next_round = run_irv(utils, elim_rule, eliminated + [elim])
+        next_round = run_irv(utils, count_rule, elim_rule, eliminated + [elim])
         # print(f"with {eliminated + [elim]} eliminated, next round's win probabilities are {next_round}")
         
         for alt in range(len(win_distrib)):
@@ -127,9 +161,204 @@ def main():
 
     print(f"distortion = {max_sw/sw}")
 
+def ballot_to_utils(ballots):
+    m = len(ballots[0])
+    utils = [[0] * m for _ in range(len(ballots))]
+    
+    for i, ballot in enumerate(ballots):
+        for j, candidate in enumerate(ballot):
+            utils[i][candidate - 1] = m - j  # Assign utility based on position in the ballot
 
+    return utils
+
+def main2():
+
+    election = (
+        [[1,2,3,4]] +
+        [[1,2,3,4]] +
+        [[1,3,2,4]] +
+        [[1,3,2,4]] +
+        [[3,2,1,4]] +
+        [[4,3,2,1]] +
+        [[4,2,1,3]] +
+        [[2,1,3,4]]
+    )
+
+
+    election2 = (
+        [[1,2,3]] +
+        [[1,2,3]] +
+        [[1,3,2]] +
+        [[1,3,2]] +
+        [[3,2,1]] +
+        [[3,2,1]] +
+        [[2,1,3]] +
+        [[2,1,3]]
+    )
+
+
+    utils = ballot_to_utils(election)
+    win_distrib = run_irv(utils, count_rule=util_to_first_distrib)
+
+    print(f"win distrib is {win_distrib}")
+
+    utils2 = ballot_to_utils(election2)
+    win_distrib2 = run_irv(utils2, count_rule=util_to_first_distrib)
+
+    print(f"win distrib is {win_distrib2}")
+
+    one_diff = win_distrib2[0] - win_distrib[0]
+    # four_diff = win_distrib2[3] - win_distrib[3]
+    print(f"the difference in the first candidate's win probability is {one_diff}")
+    # print(f"the difference in the fourth candidate's win probability is {four_diff}")
+
+    # winner = argmax(win_distrib)
+    # winner2 = argmax(win_distrib2)
+
+    # print(f"the winner of the first election is {winner + 1} and the second is {winner2 + 1}")
+
+def main3():
+    # c = 1
+    # for i in range(1, 5):
+    #     a = [1/2] + [1/ (2 * i)] * i
+    #     b = approach_two_exact(a)
+    #     c *= 1 - b[0]
+
+    # print(c)
+
+    election = [[1,2,3], [1,2,3], [1,2,3], [1,2,3], [3,2,1], [3,2,1], [2,1,3], [2,1,3]]
+
+    election2 = [[1,2,3,4], [1,2,3,4], [1,2,3,4], [1,2,3,4], [3,2,1,4], [4,3,2,1], [4,2,1,3], [2,1,3,4]]
+
+    utils = ballot_to_utils(election)
+    win_distrib = run_irv(utils, count_rule=util_to_first_distrib)
+
+    print(f"win distrib is {win_distrib}")
+
+    utils2 = ballot_to_utils(election2)
+    win_distrib2 = run_irv(utils2, count_rule=util_to_first_distrib)
+
+    print(f"win distrib is {win_distrib2}")
+
+def prcv_counterexample_main():
+    base = (
+        [[1, 2, 3, 4]] * 10000 +
+        [[2, 3, 4, 1]] * 1 +
+        [[2, 4, 3, 1]] * 1 +
+        [[3, 1, 2, 4]] * 50 +
+        [[4, 1, 2, 3]] * 50
+    )
+
+    election = base + [[2, 1, 3, 4]]
+
+
+    election2 = base + [[1, 2, 3, 4]]
+
+
+    utils = ballot_to_utils(election)
+    win_distrib = run_irv(utils, count_rule=util_to_first_distrib)
+
+    print(f"win distrib is {win_distrib}")
+
+    utils2 = ballot_to_utils(election2)
+    win_distrib2 = run_irv(utils2, count_rule=util_to_first_distrib)
+
+    print(f"win distrib is {win_distrib2}")
+
+    one_diff = win_distrib2[0] - win_distrib[0]
+    print(f"the difference in the first candidate's win probability is {one_diff}")
+
+def main5():
+    base = (
+        [[3, 1, 4, 5, 6, 7, 2]] + 
+        [[3, 1, 7, 4, 5, 6, 2]] + 
+        [[3, 1, 5, 6, 7, 4, 2]] +
+        [[3, 1, 6, 7, 4, 5, 2]] +
+        [[4, 1, 3, 5, 6, 7, 2]] + 
+        [[4, 1, 7, 3, 5, 6, 2]] + 
+        [[4, 1, 5, 6, 7, 3, 2]] +
+        [[4, 1, 6, 7, 3, 5, 2]] +
+        [[5, 1, 3, 4, 6, 7, 2]] + 
+        [[5, 1, 7, 3, 4, 6, 2]] + 
+        [[5, 1, 4, 6, 7, 3, 2]] +
+        [[5, 1, 6, 7, 3, 4, 2]] +
+        [[6, 1, 3, 5, 7, 4, 2]] + 
+        [[6, 1, 5, 7, 4, 3, 2]] +
+        [[6, 1, 7, 4, 3, 5, 2]] +
+        [[6, 1, 4, 3, 5, 7, 2]] +
+        [[7, 1, 5, 6, 4, 3, 2]] +
+        [[7, 1, 6, 4, 3, 5, 2]] +
+        [[7, 1, 4, 3, 5, 6, 2]] +
+        [[7, 1, 3, 5, 6, 4, 2]] +         
+        [[1, 2, 3, 4, 5, 6, 7]] * 1000 + 
+        [[1, 2, 4, 5, 6, 7, 3]] * 1000 +
+        [[1, 2, 5, 6, 7, 3, 4]] * 1000 + 
+        [[1, 2, 6, 7, 3, 4, 5]] * 1000 + 
+        [[1, 2, 7, 3, 4, 5, 6]] * 1000
+    )
+
+    election = base + [[2, 1, 3, 4]]
+
+
+    election2 = base + [[1, 2, 3, 4]]
+
+
+    utils = ballot_to_utils(election)
+    win_distrib = run_irv(utils, count_rule=util_to_harmonic)
+
+    round1_elim_probs = approach_two_exact(util_to_harmonic(utils))
+
+    print(f"win distrib is {win_distrib}")
+
+    utils2 = ballot_to_utils(election2)
+    win_distrib2 = run_irv(utils2, count_rule=util_to_harmonic)
+
+    round1_elim_probs2 = approach_two_exact(util_to_harmonic(utils2))
+
+    print(f"win distrib is {win_distrib2}")
+
+    one_diff = win_distrib2[0] - win_distrib[0]
+    print(f"the difference in the first candidate's win probability is {one_diff}")
+
+    change_in_elim_probs = [a - b for a, b in zip(round1_elim_probs2, round1_elim_probs)]
+
+    print(f"change in round 1 elimination probabilities is {change_in_elim_probs}")
+
+    for i in [1,2,3,4,5,6]:
+        win_prob = run_irv(utils2, count_rule=util_to_harmonic, eliminated=[i])[0]
+        print(win_prob, win_prob * change_in_elim_probs[i])
+
+    print(sum([run_irv(utils2, count_rule=util_to_harmonic, eliminated=[i])[0] * change_in_elim_probs[i] for i in [1,2,3,4,5,6]]))
+
+def main6():
+
+    # election = (
+    #     [[1, 2, 3, 4, 5, 6]] + 
+    #     [[1, 3, 4, 5, 6, 2]] +
+    #     [[1, 4, 5, 6, 2, 3]] +
+    #     [[1, 5, 6, 2, 3, 4]] + 
+    #     [[1, 6, 2, 3, 4, 5]]
+    # )
+
+    # election = (
+    #     [[1, 2, 3, 4, 5]] + 
+    #     [[1, 3, 4, 5, 2]] +
+    #     [[1, 4, 5, 2, 3]] +
+    #     [[1, 5, 2, 3, 4]] + 
+    #     [[1, 2, 3, 4, 5]]
+    # )
+
+    election = [[1, 2, 3, 4, 5]]
+
+    utils = ballot_to_utils(election)
+
+    print(util_to_harmonic(utils))
+
+    win_distrib = run_irv(utils, count_rule=util_to_harmonic)
+
+    print(f"win distrib is {win_distrib}")
 
 if __name__ == "__main__":
-    main()
+    prcv_counterexample_main()
 
 
