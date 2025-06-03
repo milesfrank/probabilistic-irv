@@ -61,13 +61,13 @@ def util_to_harmonic(utils, eliminated=[]):
                 continue
             harmonic[alt] += 1 / (i + 1)
 
-    harmonic = [f/sum(harmonic) for f in harmonic]
     harmonic = [-1 if i in eliminated else harmonic[i] for i in range(len(harmonic))] 
     return harmonic
 
 def util_to_borda(utils, eliminated=[]):
     utils = normalize_utils(utils)
-    harmonic = [0] * len(utils[0])
+    borda = [0] * len(utils[0])
+    m = len(utils[0]) - len(eliminated)
     for profile in utils:
         for i in eliminated:
             profile[i] = -1
@@ -75,11 +75,10 @@ def util_to_borda(utils, eliminated=[]):
         for i, alt in enumerate(order):
             if alt in eliminated:
                 continue
-            harmonic[alt] += 1 / (i + 1)
+            borda[alt] += m - i - 1  # Borda count is m - position in the order
 
-    harmonic = [f/sum(harmonic) for f in harmonic]
-    harmonic = [-1 if i in eliminated else harmonic[i] for i in range(len(harmonic))] 
-    return harmonic
+    borda = [-1 if i in eliminated else borda[i] for i in range(len(borda))] 
+    return borda
 
 
 def run_irv(utils, count_rule=util_to_first_distrib, elim_rule=approach_two_exact, eliminated=[]):
@@ -332,23 +331,19 @@ def main5():
 
 def main6():
 
-    # election = (
-    #     [[1, 2, 3, 4, 5, 6]] + 
-    #     [[1, 3, 4, 5, 6, 2]] +
-    #     [[1, 4, 5, 6, 2, 3]] +
-    #     [[1, 5, 6, 2, 3, 4]] + 
-    #     [[1, 6, 2, 3, 4, 5]]
-    # )
-
-    # election = (
-    #     [[1, 2, 3, 4, 5]] + 
-    #     [[1, 3, 4, 5, 2]] +
-    #     [[1, 4, 5, 2, 3]] +
-    #     [[1, 5, 2, 3, 4]] + 
-    #     [[1, 2, 3, 4, 5]]
-    # )
-
     election = [[1, 2, 3, 4, 5]]
+
+    utils = ballot_to_utils(election)
+
+    print(util_to_borda(utils))
+
+    win_distrib = run_irv(utils, count_rule=util_to_borda)
+
+    print(f"win distrib is {win_distrib}")
+
+def main7():
+
+    election = [[1, 2, 3, 4]]
 
     utils = ballot_to_utils(election)
 
@@ -358,7 +353,77 @@ def main6():
 
     print(f"win distrib is {win_distrib}")
 
+def borda_insertion_counterexample():
+    election = (
+        [[1,2,3]] * 2 +
+        [[1,3,2]] * 2 +
+        [[2,3,1]] * 2 +
+        [[3,2,1]] * 2
+    )
+
+    election2 = (
+        [[1,4,2,3]] * 2 +
+        [[1,4,3,2]] * 2 +
+        [[2,3,1,4]] +
+        [[3,2,1,4]] +
+        [[2,3,1,4]] +
+        [[3,2,1,4]]
+    )
+
+
+    for rule in [util_to_first_distrib, util_to_harmonic, util_to_borda]:
+        print()
+        print(f"using {rule.__name__} as the counting rule")
+        utils = ballot_to_utils(election)
+        win_distrib = run_irv(utils, count_rule=rule)
+
+        print(f"win distrib is {win_distrib}")
+
+        utils2 = ballot_to_utils(election2)
+        win_distrib2 = run_irv(utils2, count_rule=rule)
+
+        print(f"win distrib is {win_distrib2}")
+
+        one_diff = win_distrib2[0] - win_distrib[0]
+        print(f"the difference in the first candidate's win probability is {one_diff}")
+
+def main8():
+    election = (
+        [[1,2,3]] * 2 +
+        [[1,3,2]] * 2 +
+        [[2,3,1]] * 2 +
+        [[3,2,1]] * 2
+    )
+
+    election2 = (
+        [[1,4,2,3]] * 2 +
+        [[1,4,3,2]] * 2 +
+        [[2,3,1,4]] +
+        [[3,2,1,4]] +
+        [[2,3,1,4]] +
+        [[3,2,1,4]]
+    )
+
+    print(election)
+    print(election2)
+
+    for rule in [util_to_first_distrib, util_to_harmonic, util_to_borda]:
+        print()
+        print(f"using {rule.__name__} as the counting rule")
+        utils = ballot_to_utils(election)
+        win_distrib = run_irv(utils, count_rule=rule)
+
+        print(f"win distrib is {win_distrib}")
+
+        utils2 = ballot_to_utils(election2)
+        win_distrib2 = run_irv(utils2, count_rule=rule)
+
+        print(f"win distrib is {win_distrib2}")
+
+        one_diff = win_distrib2[0] - win_distrib[0]
+        print(f"the difference in the first candidate's win probability is {one_diff}")
+
 if __name__ == "__main__":
-    prcv_counterexample_main()
+    main8()
 
 
