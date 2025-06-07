@@ -355,75 +355,94 @@ def main7():
 
 def borda_insertion_counterexample():
     election = (
-        [[1,2,3]] * 2 +
-        [[1,3,2]] * 2 +
-        [[2,3,1]] * 2 +
-        [[3,2,1]] * 2
+        [[1,2,3]] +
+        [[1,3,2]] +
+        [[2,3,1]] +
+        [[3,2,1]] 
     )
 
     election2 = (
-        [[1,4,2,3]] * 2 +
-        [[1,4,3,2]] * 2 +
-        [[2,3,1,4]] +
-        [[3,2,1,4]] +
+        [[1,4,2,3]] +
+        [[1,4,3,2]] +
         [[2,3,1,4]] +
         [[3,2,1,4]]
     )
 
 
-    for rule in [util_to_first_distrib, util_to_harmonic, util_to_borda]:
-        print()
-        print(f"using {rule.__name__} as the counting rule")
-        utils = ballot_to_utils(election)
-        win_distrib = run_irv(utils, count_rule=rule)
+    utils = ballot_to_utils(election)
+    win_distrib = run_irv(utils, count_rule=util_to_borda)
 
-        print(f"win distrib is {win_distrib}")
+    print(f"win distrib is {win_distrib}")
 
-        utils2 = ballot_to_utils(election2)
-        win_distrib2 = run_irv(utils2, count_rule=rule)
+    utils2 = ballot_to_utils(election2)
+    win_distrib2 = run_irv(utils2, count_rule=util_to_borda)
 
-        print(f"win distrib is {win_distrib2}")
+    print(f"win distrib is {win_distrib2}")
 
-        one_diff = win_distrib2[0] - win_distrib[0]
-        print(f"the difference in the first candidate's win probability is {one_diff}")
+    one_diff = win_distrib2[0] - win_distrib[0]
+    print(f"the difference in the first candidate's win probability is {one_diff}")
+
+def borda_insertion_counterexample2():
+    election = (
+        [[1,2]] +
+        [[2,1]]
+    )
+
+    election2 = (
+        [[1,3,2]] +
+        [[2,1,3]]
+    )
+
+
+    utils = ballot_to_utils(election)
+    win_distrib = run_irv(utils, count_rule=util_to_borda)
+
+    print(f"win distrib is {win_distrib}")
+
+    utils2 = ballot_to_utils(election2)
+    win_distrib2 = run_irv(utils2, count_rule=util_to_borda)
+
+    print(f"win distrib is {win_distrib2}")
+
+    one_diff = win_distrib2[0] - win_distrib[0]
+    print(f"the difference in the first candidate's win probability is {one_diff}")
+
+import itertools
+def make_permutation(start, end):
+    return [list(range(1, start)) + list(p) for p in itertools.permutations(range(start, end + 1))]
 
 def main8():
     election = (
-        [[1,2,3]] * 2 +
-        [[1,3,2]] * 2 +
-        [[2,3,1]] * 2 +
-        [[3,2,1]] * 2
+        make_permutation(2,6)
     )
 
     election2 = (
-        [[1,4,2,3]] * 2 +
-        [[1,4,3,2]] * 2 +
-        [[2,3,1,4]] +
-        [[3,2,1,4]] +
-        [[2,3,1,4]] +
-        [[3,2,1,4]]
+        [p + [7] for p in make_permutation(2,6)]
     )
 
-    print(election)
-    print(election2)
+    print(len(election))
+    print(len(election2))
 
-    for rule in [util_to_first_distrib, util_to_harmonic, util_to_borda]:
-        print()
-        print(f"using {rule.__name__} as the counting rule")
-        utils = ballot_to_utils(election)
-        win_distrib = run_irv(utils, count_rule=rule)
 
-        print(f"win distrib is {win_distrib}")
+    utils = ballot_to_utils(election)
+    win_distrib = run_irv(utils, count_rule=util_to_harmonic)
 
-        utils2 = ballot_to_utils(election2)
-        win_distrib2 = run_irv(utils2, count_rule=rule)
+    print(f"win distrib is {win_distrib}")
 
-        print(f"win distrib is {win_distrib2}")
+    utils2 = ballot_to_utils(election2)
+    win_distrib2 = run_irv(utils2, count_rule=util_to_harmonic)
+    print(f"win distrib is {win_distrib2}")
 
-        one_diff = win_distrib2[0] - win_distrib[0]
-        print(f"the difference in the first candidate's win probability is {one_diff}")
+    one_diff = win_distrib2[0] - win_distrib[0]
+    print(f"the difference in the first candidate's win probability is {one_diff}")
+    
+    print(sum([win_distrib2[i] - win_distrib[i] for i in range(1,len(win_distrib))]), win_distrib2[-1])
 
 if __name__ == "__main__":
-    main8()
+    borda_insertion_counterexample2()
 
 
+# how non monotonic is it (bound for this)
+# come up with a counterexample given scoring vector and m
+# is borda still non insertion monotonic for higher m
+# threshhold for being insertion monotonic (what are we even thresholding (maybe biggest difference between two scoring positions, or first/last, or probably something else))
