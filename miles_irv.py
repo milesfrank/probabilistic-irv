@@ -97,9 +97,7 @@ def util_to_f(utils, f, eliminated=tuple()):
     return count
 
 
-from functools import cache
-@cache
-def run_irv(utils, count_rule=util_to_first_distrib, elim_rule=approach_two_exact, eliminated=tuple()):
+def run_irv(utils, count_rule=util_to_first_distrib, elim_rule=approach_two_exact, eliminated=[]):
     if len(eliminated) == len(utils[0]) - 1:
         win_distrib = [0 if i in eliminated else 1 for i in range(len(utils[0]))]
         return win_distrib
@@ -113,7 +111,7 @@ def run_irv(utils, count_rule=util_to_first_distrib, elim_rule=approach_two_exac
         if elim in eliminated:
             continue
 
-        next_round = run_irv(utils, count_rule, elim_rule, tuple((eliminated + [elim]).sort()))
+        next_round = run_irv(utils, count_rule, elim_rule, eliminated + [elim])
         
         for alt in range(len(win_distrib)):
             if alt != elim:
@@ -541,25 +539,28 @@ def main9():
         previous2 = win_distrib[0]
 
 def harmonic_testing():
-    k = 100
+    k = 2
+    m = 100
     base = (
-        [[1] + list(range(5, 101)) + [3,4,2]] * int(1.5 * k) + 
-        [[1] + list(range(5, 101)) + [4,3,2]] * int(1.5 * k) + 
-        [[1,3] + list(range(5, 101)) + [4,2]] * k + 
-        [[1,4] + list(range(5, 101)) + [3,2]] * k
-        
+        [[1] + list(range(5, m)) + [2,3,4]] * int(1.5 * k) + 
+        [[1] + list(range(m-1, 4, -1)) + [2,4,3]] * int(1.5 * k) + 
+        [[1,3] + list(range(5, m)) + [2,4]] * k + 
+        [[1,4] + list(range(m-1, 4, -1)) + [2,3]] * k 
     )
 
-    election = base + [[2,1] + list(range(5, 101)) + [4,3]] 
-    election2 = base + [[1,2] + list(range(5, 101)) + [4,3]] 
+    election = base + [[2,1] + list(range(5, m)) + [4,3]]
+    election2 = base + [[1,2] + list(range(5, m)) + [4,3]]
 
     utils = ballot_to_utils(election)
+    utils = list_to_tuple(utils)
 
-    win_distrib = run_irv(utils, count_rule=util_to_harmonic)
+    win_distrib = run_irv_big(utils, count_rule=util_to_harmonic)
     print(f"win distrib is {win_distrib}")
 
     utils2 = ballot_to_utils(election2)
-    win_distrib2 = run_irv(utils2, count_rule=util_to_harmonic)
+    utils2 = list_to_tuple(utils2)
+
+    win_distrib2 = run_irv_big(utils2, count_rule=util_to_harmonic)
     print(f"win distrib is {win_distrib2}")
 
     one_diff = win_distrib2[0] - win_distrib[0]
@@ -570,6 +571,47 @@ def harmonic_testing():
     # print([x / sum(scores) for x in scores][:4])
     # print([x / sum(scores[:4]) for x in scores[:4]])
     # print(approach_two_exact(util_to_harmonic(utils))[:4])
+
+def list_to_tuple(lst):
+    return tuple(tuple(x) for x in lst)
+
+from functools import lru_cache
+@lru_cache(maxsize=None)
+def run_irv_big(utils: tuple, count_rule=util_to_first_distrib, elim_rule=approach_two_exact, eliminated: tuple=tuple()):
+    eliminated = list(eliminated)
+    # print(eliminated)
+
+    if {0, 1, 2, 3}.issubset(set(eliminated)):
+        return [0, 0, 0, 0, 1]
+    if len(eliminated) == len(utils[0]) - 1:
+        win_distrib = [0 if i in eliminated else 1 for i in range(5)]
+        # print(win_distrib)
+        return win_distrib
+    
+    win_distrib = [0, 0, 0, 0, 0]
+    counts = count_rule(utils, eliminated)
+
+    elim_probs_full = elim_rule(counts)
+    elim_probs = elim_probs_full[:4] + [sum(elim_probs_full[4:])] 
+
+    for elim in range(len(elim_probs)):
+        if elim == 4:
+            if len((set(range(len(utils[0]))) - set(eliminated)) - {0, 1, 2, 3}) == 0:
+                continue
+            next_elim = max(set(range(len(utils[0]))) - set(eliminated))
+        else:
+            if elim in eliminated:
+                continue
+            next_elim = elim
+
+        next_round = run_irv_big(utils, count_rule, elim_rule, tuple(sorted(eliminated + [next_elim])))
+        next_round = next_round[:4] + [sum(next_round[4:])]
+
+        for alt in range(len(win_distrib)):
+            # if alt != elim:
+            win_distrib[alt] += elim_probs[min(next_elim, 4)] * next_round[alt]
+
+    return win_distrib
 
 if __name__ == "__main__":
     harmonic_testing()
