@@ -1,8 +1,8 @@
 from itertools import permutations
 
-ballots = list(permutations([0, 1, 2, 3]))[::2]
+ballots = list(permutations([0, 1, 2, 3]))
 
-print(ballots)
+# print(ballots)
 
 # print(len(ballots))
 
@@ -28,9 +28,9 @@ print(ballots)
 possible_utilities = [
     [0,0,0,0],
     [1,0,0,0],
-    [0.5,0.5,0,0],
+    # [0.5,0.5,0,0],
     [0,0,0,-1],
-    [0,0,-0.5,-0.5]
+    # [0,0,-0.5,-0.5]
 ]
 
 attempts = {}
@@ -59,6 +59,9 @@ def search(ballot_num, utility_profiles):
         profile = [0] * m
         for i, alt in enumerate(ballots[ballot_num]):
             profile[alt] = utility[i]
+
+        if profile[0] < 0:
+            continue
         search(ballot_num + 1, utility_profiles + [tuple(profile)])
 
 search(0, [])
